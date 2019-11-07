@@ -93,7 +93,16 @@ double Blensor_GetPropertyValue_Double(struct Object *root, const char *name, do
 
 
 /* Setup a single ray and cast it onto the raytree */
-static int cast_ray(RayObject *tree, float sx, float sy, float sz, float vx, float vy, float vz, float *ret, void **hit_ob, void **hit_face, Render *re, SceneRenderLayer *srl, int shading)
+static int cast_ray(RayObject *tree, 
+                    float sx, float sy, float sz, 
+                    float vx, float vy, float vz, 
+                    float *ret, 
+                    void **hit_ob, 
+                    void **hit_face, 
+                    Render *re, 
+                    SceneRenderLayer *srl, 
+                    int shading,
+                    char *element_name)
 {
     struct Isect isect;
     int res=0;
@@ -228,6 +237,13 @@ static int cast_ray(RayObject *tree, float sx, float sy, float sz, float vx, flo
                  {  
                     bytes[idx] = obi->ob->id.name[idx+2];
                  }
+
+                 // Extract full name into separate variable
+                 for (idx = 0; idx < 19 && obi->ob->id.name[idx+2] != 0; idx++)
+                 {  
+                    element_name[idx] = obi->ob->id.name[idx+2];
+                 }
+
             }
        }
     }
@@ -347,8 +363,17 @@ static void threaded_blensor_processor(Render *re)
 
 
 /* cast all rays specified in *rays and return the result via *returns */
-static void do_blensor(Render *re, float *rays, int raycount, int elements_per_ray, float *returns, float maximum_distance,
-                       Main *bmain, Scene *scene, SceneRenderLayer *srl, int shading)
+static void do_blensor(Render *re, 
+                       float *rays, 
+                       int raycount, 
+                       int elements_per_ray, 
+                       float *returns, 
+                       float maximum_distance,
+                       Main *bmain, 
+                       Scene *scene, 
+                       SceneRenderLayer *srl, 
+                       int shading,
+                       char *names)
 {
     int idx;
     float refractive_index = 1.0;
@@ -396,6 +421,7 @@ static void do_blensor(Render *re, float *rays, int raycount, int elements_per_r
         float sx = 0.0, sy=0.0, sz=0.0;
         float vx = rays[idx*elements_per_ray], vy=rays[idx*elements_per_ray+1], vz=rays[idx*elements_per_ray+2];
         float intersection[BLENSOR_INTERSECTION_RETURNS];
+        char element_name[20];
         //Transmission threshold and reflection threshold should be set for
         //every ray from within python
 
@@ -422,7 +448,16 @@ static void do_blensor(Render *re, float *rays, int raycount, int elements_per_r
             double reflected_energy = 0.0;
             reflection = 0;
             transmission = 0;
-            cast_ray(re->raytree, sx, sy, sz, vx, vy, vz, intersection, &hit_ob, &hit_face, re, srl, shading);
+            cast_ray(re->raytree, 
+                     sx, sy, sz, 
+                     vx, vy, vz, 
+                     intersection, 
+                     &hit_ob, 
+                     &hit_face, 
+                     re, 
+                     srl, 
+                     shading,
+                     element_name);
   
             raydistance += intersection[0];
 
@@ -496,6 +531,11 @@ static void do_blensor(Render *re, float *rays, int raycount, int elements_per_r
         returns[idx*BLENSOR_ELEMENTS_PER_RETURN+5] = intersection[12]; //r-value
         returns[idx*BLENSOR_ELEMENTS_PER_RETURN+6] = intersection[13]; //g-value
         returns[idx*BLENSOR_ELEMENTS_PER_RETURN+7] = intersection[14]; //b-value
+
+        for (int c=0; c<20; c++)
+        {
+            names[idx*20+c] = element_name[c];
+        }
         
         if (raydistance <= maxdist && valid_signal != 0)
         {   
@@ -568,7 +608,22 @@ static int render_break(void *UNUSED(rjv))
 
 /* #TODO@mgschwan: There is a memory leak somewhere in the raycasting code. Find it! */
 /* Setup the evnironment and call the raycaster function */
-void RE_BlensorFrame(Render *re, Main *bmain, Scene *scene, SceneRenderLayer *srl, Object *camera_override, unsigned int lay, int frame, const short write_still, float *rays, int raycount, int elements_per_ray, float *returns, float maximum_distance, int keep_setup, int shading)
+void RE_BlensorFrame(Render *re, 
+                     Main *bmain, 
+                     Scene *scene, 
+                     SceneRenderLayer *srl, 
+                     Object *camera_override, 
+                     unsigned int lay, 
+                     int frame, 
+                     const short write_still, 
+                     float *rays,  
+                     int raycount, 
+                     int elements_per_ray, 
+                     float *returns, 
+                     float maximum_distance, 
+                     int keep_setup, 
+                     int shading,
+                     char *names)
 {
   static int render_still_available = 0; //If this is 1 the raycasting is still setup from
                                          //previous renders, and can be reused
@@ -594,7 +649,17 @@ void RE_BlensorFrame(Render *re, Main *bmain, Scene *scene, SceneRenderLayer *sr
     RE_Database_FromScene(re, re->main, re->scene, re->lay, 1); //Sets up all the stuff
 		RE_Database_Preprocess(re);
 
-    do_blensor(re, rays, raycount, elements_per_ray, returns, maximum_distance, bmain, scene, srl, shading);
+    do_blensor(re,
+               rays,
+               raycount,
+               elements_per_ray,
+               returns,
+               maximum_distance,
+               bmain,
+               scene,
+               srl,
+               shading,
+               names);
 	
     // moved here from the end of do_blensor 
     // free all render verts etc 
@@ -616,7 +681,15 @@ void RE_BlensorFrame(Render *re, Main *bmain, Scene *scene, SceneRenderLayer *sr
 }
 
 /* executes blocking blensor */
-int screen_blensor_exec(bContext *C, int raycount, int elements_per_ray, int keep_render_setup, int shading, float maximum_distance, char *ray_ptr_str, char *return_ptr_str)
+int screen_blensor_exec(bContext *C, 
+                        int raycount, 
+                        int elements_per_ray, 
+                        int keep_render_setup, 
+                        int shading, 
+                        float maximum_distance, 
+                        char *ray_ptr_str, 
+                        char *return_ptr_str,
+                        char *name_ptr_str)
 {
 	Scene *scene= CTX_data_scene(C);
     SceneRenderLayer *srl = NULL;
@@ -627,12 +700,14 @@ int screen_blensor_exec(bContext *C, int raycount, int elements_per_ray, int kee
 	unsigned int lay= (v3d)? v3d->lay: scene->lay;
     float *rays;
     float *returns;
+    char *names;
 
 	struct Object *camera_override= v3d ? V3D_CAMERA_LOCAL(v3d) : NULL;
 
 
     rays = (float *)convert_str_to_ptr(ray_ptr_str);
     returns = (float *)convert_str_to_ptr(return_ptr_str);
+    names = (char *)convert_str_to_ptr(name_ptr_str);
       
     if (raycount > 0)
     {
@@ -661,7 +736,22 @@ int screen_blensor_exec(bContext *C, int raycount, int elements_per_ray, int kee
 
         BLI_threaded_malloc_begin();
 
-        RE_BlensorFrame(re, mainp, scene, NULL, camera_override, lay, scene->r.cfra, 0, rays, raycount, elements_per_ray, returns, maximum_distance, keep_render_setup, shading);
+        RE_BlensorFrame(re, 
+                        mainp, 
+                        scene, 
+                        NULL, 
+                        camera_override, 
+                        lay, 
+                        scene->r.cfra, 
+                        0, 
+                        rays, 
+                        raycount, 
+                        elements_per_ray, 
+                        returns, 
+                        maximum_distance, 
+                        keep_render_setup, 
+                        shading,
+                        names);
 
         BLI_threaded_malloc_end();
 

@@ -157,7 +157,11 @@ def scan_advanced(scanner_object, simulation_fps=24, evd_file=None,noise_mu=0.0,
             rays.extend([ray[0],ray[1],ray[2]])
 
 
-    returns = blensor.scan_interface.scan_rays(rays, max_distance, inv_scan_x = inv_scan_x, inv_scan_y = inv_scan_y, inv_scan_z = inv_scan_z)
+    returns = blensor.scan_interface.scan_rays(rays,
+                                               max_distance,
+                                               inv_scan_x = inv_scan_x,
+                                               inv_scan_y = inv_scan_y,
+                                               inv_scan_z = inv_scan_z)
 
     reusable_vector = Vector([0.0,0.0,0.0,0.0])
     if len(laser_angles) != len(laser_noise):

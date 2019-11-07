@@ -96,7 +96,7 @@ PyDoc_STRVAR(M_Blensorintern_doc,
 /*------------------------------------------------------------*/
 
 PyDoc_STRVAR(M_Blensorintern_scan_doc,
-".. function:: scan(raycount, elements_per_ray, keep_render_setup, shading, maximum_distance, ray_ptr_str, return_ptr_str)\n"
+".. function:: scan(raycount, elements_per_ray, keep_render_setup, shading, maximum_distance, ray_ptr_str, return_ptr_str, name_ptr_str)\n"
 "   :return: status\n"
 "   :rtype: integer\n"
 );
@@ -105,18 +105,32 @@ static PyObject *M_Blensorintern_scan(PyObject *UNUSED(self), PyObject *args)
   int raycount, elements_per_ray, keep_render_setup;
   int shading;
   float maximum_distance;
-  char *ray_ptr_str, *return_ptr_str;
+  char *ray_ptr_str, *return_ptr_str, *name_ptr_str;
   bContext *C;
   PyObject *result;
   
-  if (!PyArg_ParseTuple(args, "IfIIIss", &raycount, &maximum_distance, &elements_per_ray,
-      &keep_render_setup, &shading,  
-      &ray_ptr_str, &return_ptr_str))
+  if (!PyArg_ParseTuple(args,
+                        "IfIIIsss",
+                        &raycount,
+                        &maximum_distance,
+                        &elements_per_ray,
+                        &keep_render_setup,
+                        &shading,
+                        &ray_ptr_str,
+                        &return_ptr_str,
+                        &name_ptr_str))
     return 0;
     
 	C = (bContext *)BPy_GetContext();
-  screen_blensor_exec(C, raycount, elements_per_ray, keep_render_setup, 
-                 shading, maximum_distance, ray_ptr_str, return_ptr_str);
+  screen_blensor_exec(C,
+                      raycount,
+                      elements_per_ray,
+                      keep_render_setup,
+                      shading,
+                      maximum_distance,
+                      ray_ptr_str,
+                      return_ptr_str,
+                      name_ptr_str);
 
   result = Py_BuildValue("i",0);
 

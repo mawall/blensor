@@ -94,6 +94,17 @@
 #include "zbuf.h"
 
 
-int screen_blensor_exec(bContext *C, int raycount, int elements_per_ray, int keep_render_setup, int shading, float maximum_distance, char *ray_ptr_str, char *return_ptr_str);
-void blensor_Image_copy_zbuf(Image *image, bContext *C, int *outbuffer_len, float **outbuffer);
+int screen_blensor_exec(bContext *C,
+                        int raycount,
+                        int elements_per_ray,
+                        int keep_render_setup,
+                        int shading,
+                        float maximum_distance,
+                        char *ray_ptr_str,
+                        char *return_ptr_str,
+                        char *name_ptr_str);
+void blensor_Image_copy_zbuf(Image *image,
+                             bContext *C,
+                             int *outbuffer_len,
+                             float **outbuffer);
 

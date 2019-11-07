@@ -21,6 +21,7 @@ except:
    patch
 """
 ELEMENTS_PER_RETURN = 8
+CHARS_PER_RETURN = 20
 SIZEOF_FLOAT = 4
 
 """ rays is an array of vectors that describe the laser direction and also the
@@ -29,7 +30,15 @@ SIZEOF_FLOAT = 4
     keep_render_setup is passed to the blender internal code to keep the renderer
     setup for additional calls
 """
-def scan_rays(rays, max_distance, ray_origins=False, keep_render_setup=False, do_shading=True, return_all = False, inv_scan_x = False, inv_scan_y = False, inv_scan_z = False):
+def scan_rays(rays,
+              max_distance,
+              ray_origins=False,
+              keep_render_setup=False,
+              do_shading=True,
+              return_all = False,
+              inv_scan_x = False,
+              inv_scan_y = False,
+              inv_scan_z = False):
 
     elementsPerRay = 3
     if ray_origins == True:
@@ -42,8 +51,9 @@ def scan_rays(rays, max_distance, ray_origins=False, keep_render_setup=False, do
     struct.pack_into("%df"%(numberOfRays*elementsPerRay), rays_buffer, 0, *rays[:numberOfRays*elementsPerRay])
 
     returns_buffer = (ctypes.c_float * (numberOfRays * ELEMENTS_PER_RETURN))()
+    names_buffer = (ctypes.c_char * (numberOfRays * CHARS_PER_RETURN))()
    
-    print ("Raycount: ", numberOfRays)
+    print("Raycount: ", numberOfRays)
     
     returns_buffer_uint = ctypes.cast(returns_buffer, ctypes.POINTER(ctypes.c_uint))
 
@@ -51,11 +61,23 @@ def scan_rays(rays, max_distance, ray_origins=False, keep_render_setup=False, do
     if True:
     #try:
       if blensorintern:
-          blensorintern.scan(numberOfRays, max_distance, elementsPerRay, keep_render_setup, do_shading,                 
-                "%016X"%(ctypes.addressof(rays_buffer)), "%016X"%(ctypes.addressof(returns_buffer)))
+          blensorintern.scan(numberOfRays, 
+                             max_distance, 
+                             elementsPerRay, 
+                             keep_render_setup, 
+                             do_shading,                 
+                             "%016X"%(ctypes.addressof(rays_buffer)), 
+                             "%016X"%(ctypes.addressof(returns_buffer)),
+                             "%016X"%(ctypes.addressof(names_buffer)))
       else:
-          blensor.scan_interface_pure.scan(numberOfRays, max_distance, elementsPerRay, keep_render_setup, do_shading,                 
-                rays, returns_buffer, ELEMENTS_PER_RETURN)
+          blensor.scan_interface_pure.scan(numberOfRays,
+                                           max_distance,
+                                           elementsPerRay,
+                                           keep_render_setup,
+                                           do_shading,
+                                           rays,
+                                           returns_buffer,
+                                           ELEMENTS_PER_RETURN)
 
 
       x_multiplier = -1.0 if inv_scan_x else 1.0
@@ -90,6 +112,8 @@ def scan_rays(rays, max_distance, ray_origins=False, keep_render_setup=False, do
                 ret[2] = vec[1]
                 ret[3] = vec[2]
               ret.append(returns_buffer_uint[idx*ELEMENTS_PER_RETURN+4]) #objectid
+              print(str(names_buffer[idx*20:idx*20+20]))
+              # ret.append(names_buffer[idx*20]) # element name
               ret.append((returns_buffer[idx*ELEMENTS_PER_RETURN+5],
                           returns_buffer[idx*ELEMENTS_PER_RETURN+6],
                           returns_buffer[idx*ELEMENTS_PER_RETURN+7])) # RGB Value of the material
