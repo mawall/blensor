@@ -112,12 +112,14 @@ def scan_rays(rays,
                 ret[2] = vec[1]
                 ret[3] = vec[2]
               ret.append(returns_buffer_uint[idx*ELEMENTS_PER_RETURN+4]) #objectid
-              print(str(names_buffer[idx*20:idx*20+20]))
               # ret.append(names_buffer[idx*20]) # element name
               ret.append((returns_buffer[idx*ELEMENTS_PER_RETURN+5],
                           returns_buffer[idx*ELEMENTS_PER_RETURN+6],
                           returns_buffer[idx*ELEMENTS_PER_RETURN+7])) # RGB Value of the material
               ret.append(idx) # Store the index per return as the last element
+              element_name = names_buffer[idx*20:idx*20+20].decode('utf-8').strip('\x00')
+              print(element_name)
+              ret.append(ret.append(element_name)) # element name) # element name
               array_of_returns.append(ret)
     #except TypeError as e:
     #  exc_type, exc_value, exc_traceback = sys.exc_info()

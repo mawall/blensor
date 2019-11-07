@@ -168,19 +168,28 @@ def scan_advanced(scanner_object, simulation_fps=24, evd_file=None,noise_mu=0.0,
       randomize_distance_bias(len(laser_angles), noise_mu,noise_sigma)
       
     for i in range(len(returns)):
-        idx = returns[i][-1]
+        idx = returns[i][6]
         reusable_vector.xyzw = [returns[i][1],returns[i][2],returns[i][3],1.0]
         vt = (world_transformation * reusable_vector).xyz
         v = [returns[i][1],returns[i][2],returns[i][3]]
 
         vector_length = math.sqrt(v[0]**2+v[1]**2+v[2]**2)
-        distance_noise =  laser_noise[idx%len(laser_noise)] + model.drawErrorFromModel(vector_length) 
+        distance_noise = laser_noise[idx%len(laser_noise)] + model.drawErrorFromModel(vector_length)
         norm_vector = [v[0]/vector_length, v[1]/vector_length, v[2]/vector_length]
         vector_length_noise = vector_length+distance_noise
         reusable_vector.xyzw = [norm_vector[0]*vector_length_noise, norm_vector[1]*vector_length_noise, norm_vector[2]*vector_length_noise,1.0]
         v_noise = (world_transformation * reusable_vector).xyz
 
-        evd_storage.addEntry(timestamp = ray_info[idx][2], yaw =(ray_info[idx][0]+math.pi)%(2*math.pi), pitch=ray_info[idx][1], distance=vector_length, distance_noise=vector_length_noise, x=vt[0], y=vt[1], z=vt[2], x_noise=v_noise[0], y_noise=v_noise[1], z_noise=v_noise[2], object_id=returns[i][4], color=returns[i][5])
+        evd_storage.addEntry(timestamp=ray_info[idx][2],
+                             yaw=(ray_info[idx][0]+math.pi)%(2*math.pi),
+                             pitch=ray_info[idx][1],
+                             distance=vector_length,
+                             distance_noise=vector_length_noise,
+                             x=vt[0], y=vt[1], z=vt[2],
+                             x_noise=v_noise[0], y_noise=v_noise[1], z_noise=v_noise[2],
+                             object_id=returns[i][4],
+                             object_name=returns[i][7],
+                             color=returns[i][5])
 
 
     current_angle = start_angle+float(float(int(lines))*angle_resolution)
@@ -189,7 +198,7 @@ def scan_advanced(scanner_object, simulation_fps=24, evd_file=None,noise_mu=0.0,
         evd_storage.appendEvdFile()
 
     if not evd_storage.isEmpty():
-        scan_data = numpy.array(evd_storage.buffer)
+        scan_data = numpy.array([l[:-1] for l in evd_storage.buffer])
         additional_data = None
         if scanner_object.store_data_in_mesh:
             additional_data = evd_storage.buffer

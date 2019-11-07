@@ -94,6 +94,7 @@ class evd_file:
         except:
           pass
 
+
     def fromMesh(self, mesh):
       import bmesh
       bm = bmesh.new()
@@ -138,18 +139,35 @@ class evd_file:
 
       bm.free()
 
-    def addEntry(self, timestamp=0.0, yaw=0.0, pitch=0.0, distance=0.0, 
-                 distance_noise=0.0, x=0.0, y=0.0, z=0.0,
-                 x_noise = 0.0, y_noise = 0.0, z_noise = 0.0, object_id=0, color=(1.0,1.0,1.0), idx=0):
+    def addEntry(self,
+                 timestamp=0.0,
+                 yaw=0.0,
+                 pitch=0.0,
+                 distance=0.0,
+                 distance_noise=0.0,
+                 x=0.0, y=0.0, z=0.0,
+                 x_noise=0.0, y_noise=0.0, z_noise=0.0,
+                 object_id=0,
+                 color=(1.0, 1.0, 1.0),
+                 idx=0,
+                 object_name=""):
         idx = int(idx) #If the index is a numpy.float (from the kinect)
         if self.mode == WRITER_MODE_PGM:
-          if idx >=0 and idx < len(self.image):
-            self.image[idx]=distance
-            self.image_noisy[idx]=distance_noise
-        
-        
-        self.buffer.append([timestamp, yaw, pitch, distance,distance_noise,
-                       x,y,z,x_noise,y_noise,z_noise,object_id,int(255*color[0]),int(255*color[1]),int(255*color[2]),idx])
+            if idx >=0 and idx < len(self.image):
+                self.image[idx]=distance
+                self.image_noisy[idx]=distance_noise
+
+        self.buffer.append([timestamp,
+                            yaw,
+                            pitch,
+                            distance,
+                            distance_noise,
+                            x, y, z,
+                            x_noise, y_noise, z_noise,
+                            object_id,
+                            int(255*color[0]), int(255*color[1]) ,int(255*color[2]),
+                            idx,
+                            object_name])
 
     def writeEvdFile(self):
         if self.mode == WRITER_MODE_PCL:
@@ -159,11 +177,27 @@ class evd_file:
         elif self.mode == WRITER_MODE_PGM:
           self.writePGMFile()
         else:
-          evd = open(self.filename,"w")
+          evd = open(self.filename, "w")
           evd.buffer.write(struct.pack("i", len(self.buffer)))
           for e in self.buffer:
               #The evd format does not allow negative object ids
-              evd.buffer.write(struct.pack("14dQ", float(e[0]),float(e[1]),float(e[2]),float(e[3]),float(e[4]),float(e[5]),float(e[6]),float(e[7]),float(e[8]),float(e[9]),float(e[10]), float(e[12]),float(e[13]),float(e[14]),max(0,int(e[11]))))
+              evd.buffer.write(struct.pack("14dQ20s",
+                                           float(e[0]),
+                                           float(e[1]),
+                                           float(e[2]),
+                                           float(e[3]),
+                                           float(e[4]),
+                                           float(e[5]),
+                                           float(e[6]),
+                                           float(e[7]),
+                                           float(e[8]),
+                                           float(e[9]),
+                                           float(e[10]),
+                                           float(e[12]),
+                                           float(e[13]),
+                                           float(e[14]),
+                                           max(0, int(e[11])),
+                                           e[16].encode('utf-8')))
           evd.close()
 
     def appendEvdFile(self):
@@ -179,11 +213,27 @@ class evd_file:
           idx = 0
           for e in self.buffer:
               #The evd format does not allow negative object ids
-              evd.buffer.write(struct.pack("14dQ", float(e[0]),float(e[1]),float(e[2]),float(e[3]),float(e[4]),float(e[5]),float(e[6]),float(e[7]),float(e[8]),float(e[9]),float(e[10]), float(e[12]),float(e[13]),float(e[14]),max(0,int(e[11])))) 
+              evd.buffer.write(struct.pack("14dQ20s",
+                                           float(e[0]),
+                                           float(e[1]),
+                                           float(e[2]),
+                                           float(e[3]),
+                                           float(e[4]),
+                                           float(e[5]),
+                                           float(e[6]),
+                                           float(e[7]),
+                                           float(e[8]),
+                                           float(e[9]),
+                                           float(e[10]),
+                                           float(e[12]),
+                                           float(e[13]),
+                                           float(e[14]),
+                                           max(0,int(e[11])),
+                                           e[16].encode('utf-8')))
               idx = idx + 1
           print ("Written: %d entries"%idx)
           evd.close()
-  
+
     def write_point(self, pcl, pcl_noisy, e, output_labels):
       #Storing color values packed into a single floating point number??? 
       #That is really required by the pcl library!
@@ -195,8 +245,7 @@ class evd_file:
         pcl_noisy.write("%f %f %f %.15e %d\n"%(float(e[8]),float(e[9]),float(e[10]), values[0], int(e[11])))        
       else:
         pcl.write("%f %f %f %.15e\n"%(float(e[5]),float(e[6]),float(e[7]), values[0]))        
-        pcl_noisy.write("%f %f %f %.15e\n"%(float(e[8]),float(e[9]),float(e[10]), values[0]))        
-
+        pcl_noisy.write("%f %f %f %.15e\n"%(float(e[8]),float(e[9]),float(e[10]), values[0]))
 
     def writePCLFile(self):
       global frame_counter    #Not nice to have it global but it needs to persist
@@ -286,14 +335,13 @@ class evd_file:
       except Exception as e:
         traceback.print_exc()
 
-
     def finishEvdFile(self):
         evd = open(self.filename,"a")
         evd.buffer.write(struct.pack("i", -1))
         evd.close()
 
     def isEmpty(self):
-      return (len(self.buffer) == 0)
+        return (len(self.buffer) == 0)
 
 class evd_reader:
   rayIndex = 0
@@ -312,6 +360,3 @@ class evd_reader:
     ray = struct.unpack("14dQ", self.fileHandle.read(15*8))
     self.rayIndex += 1
     return ray
-    
-
-        
