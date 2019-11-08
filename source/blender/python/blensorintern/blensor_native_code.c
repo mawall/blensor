@@ -239,7 +239,7 @@ static int cast_ray(RayObject *tree,
                  }
 
                  // Extract full name into separate variable
-                 for (idx = 0; idx < 19 && obi->ob->id.name[idx+2] != 0; idx++)
+                 for (idx = 0; idx < 63 && obi->ob->id.name[idx+2] != 0; idx++)
                  {  
                     element_name[idx] = obi->ob->id.name[idx+2];
                  }
@@ -421,7 +421,7 @@ static void do_blensor(Render *re,
         float sx = 0.0, sy=0.0, sz=0.0;
         float vx = rays[idx*elements_per_ray], vy=rays[idx*elements_per_ray+1], vz=rays[idx*elements_per_ray+2];
         float intersection[BLENSOR_INTERSECTION_RETURNS];
-        char element_name[20];
+        char element_name[64];
         //Transmission threshold and reflection threshold should be set for
         //every ray from within python
 
@@ -532,9 +532,9 @@ static void do_blensor(Render *re,
         returns[idx*BLENSOR_ELEMENTS_PER_RETURN+6] = intersection[13]; //g-value
         returns[idx*BLENSOR_ELEMENTS_PER_RETURN+7] = intersection[14]; //b-value
 
-        for (int c=0; c<20; c++)
+        for (int c=0; c<64; c++)
         {
-            names[idx*20+c] = element_name[c];
+            names[idx*64+c] = element_name[c];
         }
         
         if (raydistance <= maxdist && valid_signal != 0)

@@ -21,7 +21,7 @@ except:
    patch
 """
 ELEMENTS_PER_RETURN = 8
-CHARS_PER_RETURN = 20
+CHARS_PER_RETURN = 64
 SIZEOF_FLOAT = 4
 
 """ rays is an array of vectors that describe the laser direction and also the
@@ -35,10 +35,10 @@ def scan_rays(rays,
               ray_origins=False,
               keep_render_setup=False,
               do_shading=True,
-              return_all = False,
-              inv_scan_x = False,
-              inv_scan_y = False,
-              inv_scan_z = False):
+              return_all=False,
+              inv_scan_x=False,
+              inv_scan_y=False,
+              inv_scan_z=False):
 
     elementsPerRay = 3
     if ray_origins == True:
@@ -112,14 +112,11 @@ def scan_rays(rays,
                 ret[2] = vec[1]
                 ret[3] = vec[2]
               ret.append(returns_buffer_uint[idx*ELEMENTS_PER_RETURN+4]) #objectid
-              # ret.append(names_buffer[idx*20]) # element name
               ret.append((returns_buffer[idx*ELEMENTS_PER_RETURN+5],
                           returns_buffer[idx*ELEMENTS_PER_RETURN+6],
                           returns_buffer[idx*ELEMENTS_PER_RETURN+7])) # RGB Value of the material
               ret.append(idx) # Store the index per return as the last element
-              element_name = names_buffer[idx*20:idx*20+20].decode('utf-8').strip('\x00')
-              print(element_name)
-              ret.append(ret.append(element_name)) # element name) # element name
+              ret.append(ret.append(names_buffer[idx*CHARS_PER_RETURN:idx*CHARS_PER_RETURN+CHARS_PER_RETURN])) # element name) # element name
               array_of_returns.append(ret)
     #except TypeError as e:
     #  exc_type, exc_value, exc_traceback = sys.exc_info()
