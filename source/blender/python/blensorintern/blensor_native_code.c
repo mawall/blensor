@@ -421,7 +421,7 @@ static void do_blensor(Render *re,
         float sx = 0.0, sy=0.0, sz=0.0;
         float vx = rays[idx*elements_per_ray], vy=rays[idx*elements_per_ray+1], vz=rays[idx*elements_per_ray+2];
         float intersection[BLENSOR_INTERSECTION_RETURNS];
-        char element_name[64];
+        char element_name[64] = {'\0'};
         //Transmission threshold and reflection threshold should be set for
         //every ray from within python
 
